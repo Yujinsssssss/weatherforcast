@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>간단한 날씨 앱</title>
+    <title>날씨 검색 앱 (v2)</title>
     
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
         /* 기본 스타일 */
         body {
-            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -21,130 +25,175 @@
 
         /* 날씨 앱 컨테이너 */
         .weather-app {
-            background-color: #ffffff;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 28px 32px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             text-align: center;
+            /* 부드러운 등장 효과 */
+            transform: scale(0.95);
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         /* 제목 */
         h1 {
             color: #333;
             margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 1.8em;
+            margin-bottom: 24px;
+            font-size: 2em;
+            font-weight: 700;
         }
 
         /* 입력창 컨테이너 */
         .input-container {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
         /* 도시 입력창 */
         #city-input {
-            flex-grow: 1; /* 남은 공간을 모두 차지 */
-            padding: 12px;
-            font-size: 1em;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            flex-grow: 1;
+            padding: 14px 16px;
+            font-size: 1.1em;
+            border: 1px solid #ccc;
+            border-radius: 10px;
             outline: none;
-            transition: border-color 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) inset;
         }
 
         #city-input:focus {
-            border-color: #007bff;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
         }
 
         /* 검색 버튼 */
         #search-btn {
-            padding: 0 18px;
-            font-size: 1em;
-            font-weight: bold;
+            padding: 0 22px;
+            font-size: 1.1em;
+            font-weight: 500;
             color: #fff;
-            background-color: #007bff;
+            background: linear-gradient(135deg, #5e7cf0, #4a67de);
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(94, 124, 240, 0.4);
         }
 
         #search-btn:hover {
-            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(94, 124, 240, 0.5);
+            background: linear-gradient(135deg, #667eea, #5e7cf0);
         }
 
         /* 날씨 결과 영역 */
         #weather-result {
-            margin-top: 20px;
+            margin-top: 24px;
         }
         
-        /* 로딩 및 오류 메시지 */
         #weather-result p {
-            font-size: 1.1em;
+            font-size: 1.2em;
             color: #555;
         }
 
-        /* 결과 아이템 */
+        /* 날씨 정보 카드 (결과) */
+        .weather-info {
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .weather-info h2 {
-            margin-bottom: 10px;
-            font-size: 1.6em;
+            margin-bottom: 12px;
+            font-size: 1.8em;
             color: #222;
+            font-weight: 700;
         }
 
         .weather-info img {
-            width: 80px;
-            height: 80px;
-            background-color: #f0f4f8;
-            border-radius: 50%;
+            width: 100px;
+            height: 100px;
             margin-top: -10px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
         }
 
         .weather-info .temp {
-            font-size: 2.8em;
-            font-weight: bold;
-            color: #007bff;
+            font-size: 3.5em; /* 2.8em -> 3.5em */
+            font-weight: 700; /* bold -> 700 */
+            color: #2a2a2a;
             margin: 10px 0;
         }
 
         .weather-info .condition {
-            font-size: 1.3em;
+            font-size: 1.5em; /* 1.3em -> 1.5em */
             color: #444;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             font-weight: 500;
         }
 
         .weather-info .details {
+            display: grid; /* flex -> grid */
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            text-align: center;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .weather-info .details div {
             display: flex;
-            justify-content: space-around;
-            text-align: left;
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .weather-info .details p {
-            margin: 5px 0;
+            margin: 4px 0;
             font-size: 1em;
             color: #333;
+        }
+        
+        .weather-info .details .label {
+            font-size: 0.9em;
+            color: #777;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
 
     <div class="weather-app">
-        <h1>오늘의 날씨</h1>
+        <h1>날씨 검색</h1>
         
         <div class="input-container">
-            <input type="text" id="city-input" placeholder="도시 이름 입력 (예: Seoul)">
-            <button id="search-btn">검색</button>
+            <input type="text" id="city-input" placeholder="도시 이름 (예: 서울, London)">
+            <button id="search-btn">🔍</button>
         </div>
         
         <div id="weather-result">
-            <p>도시 이름을 검색해 주세요.</p>
+            <p>도시 이름을 검색해 보세요.</p>
         </div>
     </div>
 
@@ -175,42 +224,59 @@
             const city = cityInput.value.trim();
 
             if (!city) {
-                weatherResult.innerHTML = '<p>도시 이름을 입력해 주세요.</p>';
+                // SweetAlert2로 경고창 표시
+                Swal.fire({
+                    icon: 'warning',
+                    title: '알림',
+                    text: '도시 이름을 입력해 주세요.',
+                });
                 return;
             }
 
-            // 로딩 메시지 표시
-            weatherResult.innerHTML = '<p>날씨 정보를 불러오는 중...</p>';
+            // SweetAlert2로 로딩창 표시
+            Swal.fire({
+                title: '날씨 정보 조회 중',
+                text: '잠시만 기다려 주세요...',
+                allowOutsideClick: false, // 바깥 클릭으로 안 닫히게
+                didOpen: () => {
+                    Swal.showLoading(); // 로딩 아이콘 표시
+                }
+            });
 
             try {
                 // API 호출 (한글 정보 요청을 위해 &lang=ko 추가)
                 const response = await fetch(`${apiUrl}?key=${apiKey}&q=${city}&lang=ko`);
 
                 if (!response.ok) {
-                    // API 응답이 성공(200)이 아닐 때
-                    throw new Error('도시를 찾을 수 없거나 API 요청에 실패했습니다.');
+                    throw new Error('API 응답이 올바르지 않습니다.');
                 }
 
                 const data = await response.json();
 
-                // API가 에러 메시지를 반환한 경우 (예: 도시를 못 찾음)
                 if (data.error) {
-                    throw new Error(data.error.message);
+                    // API가 반환한 특정 에러 (예: 도시를 못 찾음)
+                    throw new Error(data.error.message || '도시를 찾을 수 없습니다.');
                 }
 
+                // 로딩창 닫기
+                Swal.close();
+                
                 // 날씨 정보를 화면에 표시
                 displayWeather(data);
 
             } catch (error) {
-                // 오류 처리
+                // SweetAlert2로 오류창 표시
                 console.error('Error fetching weather:', error);
-                weatherResult.innerHTML = `<p style="color: red;">오류: ${error.message}</p>`;
+                Swal.fire({
+                    icon: 'error',
+                    title: '오류 발생',
+                    text: `날씨 정보를 가져오는 데 실패했습니다. (오류: ${error.message})`,
+                });
             }
         }
 
         // 날씨 정보를 HTML로 변환하여 표시하는 함수
         function displayWeather(data) {
-            // 필요한 데이터 추출
             const location = data.location;
             const current = data.current;
 
@@ -223,18 +289,25 @@
                     
                     <div class="details">
                         <div>
-                            <p><strong>습도:</strong> ${current.humidity}%</p>
-                            <p><strong>체감:</strong> ${current.feelslike_c}°C</p>
+                            <p class="label">습도</p>
+                            <p><strong>${current.humidity}%</strong></p>
                         </div>
                         <div>
-                            <p><strong>풍속:</strong> ${current.wind_kph} km/h</p>
-                            <p><strong>자외선:</strong> ${current.uv}</p>
+                            <p class="label">체감 온도</p>
+                            <p><strong>${current.feelslike_c}°C</strong></p>
+                        </div>
+                        <div>
+                            <p class="label">풍속</p>
+                            <p><strong>${current.wind_kph} km/h</strong></p>
+                        </div>
+                        <div>
+                            <p class="label">자외선(UV)</p>
+                            <p><strong>${current.uv}</strong></p>
                         </div>
                     </div>
                 </div>
             `;
-
-            // 결과를 화면에 삽입
+            
             weatherResult.innerHTML = htmlContent;
         }
 
