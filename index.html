@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간단한 날씨 앱</title>
+    
+    <style>
+        /* 기본 스타일 */
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* 날씨 앱 컨테이너 */
+        .weather-app {
+            background-color: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        /* 제목 */
+        h1 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        /* 입력창 컨테이너 */
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* 도시 입력창 */
+        #city-input {
+            flex-grow: 1; /* 남은 공간을 모두 차지 */
+            padding: 12px;
+            font-size: 1em;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #city-input:focus {
+            border-color: #007bff;
+        }
+
+        /* 검색 버튼 */
+        #search-btn {
+            padding: 0 18px;
+            font-size: 1em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #search-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* 날씨 결과 영역 */
+        #weather-result {
+            margin-top: 20px;
+        }
+        
+        /* 로딩 및 오류 메시지 */
+        #weather-result p {
+            font-size: 1.1em;
+            color: #555;
+        }
+
+        /* 결과 아이템 */
+        .weather-info h2 {
+            margin-bottom: 10px;
+            font-size: 1.6em;
+            color: #222;
+        }
+
+        .weather-info img {
+            width: 80px;
+            height: 80px;
+            background-color: #f0f4f8;
+            border-radius: 50%;
+            margin-top: -10px;
+        }
+
+        .weather-info .temp {
+            font-size: 2.8em;
+            font-weight: bold;
+            color: #007bff;
+            margin: 10px 0;
+        }
+
+        .weather-info .condition {
+            font-size: 1.3em;
+            color: #444;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .weather-info .details {
+            display: flex;
+            justify-content: space-around;
+            text-align: left;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .weather-info .details p {
+            margin: 5px 0;
+            font-size: 1em;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="weather-app">
+        <h1>오늘의 날씨</h1>
+        
+        <div class="input-container">
+            <input type="text" id="city-input" placeholder="도시 이름 입력 (예: Seoul)">
+            <button id="search-btn">검색</button>
+        </div>
+        
+        <div id="weather-result">
+            <p>도시 이름을 검색해 주세요.</p>
+        </div>
+    </div>
+
+    <script>
+        // DOM 요소 가져오기
+        const cityInput = document.getElementById('city-input');
+        const searchBtn = document.getElementById('search-btn');
+        const weatherResult = document.getElementById('weather-result');
+
+        // !주의: 이 키는 테스트용이며, 실제 배포 시 노출되어서는 안 됩니다.
+        const apiKey = '36991d42cc95482991b23009250911';
+        
+        // WeatherAPI 기본 URL
+        const apiUrl = 'https://api.weatherapi.com/v1/current.json';
+
+        // 검색 버튼 클릭 이벤트
+        searchBtn.addEventListener('click', fetchWeather);
+
+        // 엔터 키 입력 이벤트
+        cityInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                fetchWeather();
+            }
+        });
+
+        // 날씨 정보 가져오기 함수 (비동기)
+        async function fetchWeather() {
+            const city = cityInput.value.trim();
+
+            if (!city) {
+                weatherResult.innerHTML = '<p>도시 이름을 입력해 주세요.</p>';
+                return;
+            }
+
+            // 로딩 메시지 표시
+            weatherResult.innerHTML = '<p>날씨 정보를 불러오는 중...</p>';
+
+            try {
+                // API 호출 (한글 정보 요청을 위해 &lang=ko 추가)
+                const response = await fetch(`${apiUrl}?key=${apiKey}&q=${city}&lang=ko`);
+
+                if (!response.ok) {
+                    // API 응답이 성공(200)이 아닐 때
+                    throw new Error('도시를 찾을 수 없거나 API 요청에 실패했습니다.');
+                }
+
+                const data = await response.json();
+
+                // API가 에러 메시지를 반환한 경우 (예: 도시를 못 찾음)
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
+
+                // 날씨 정보를 화면에 표시
+                displayWeather(data);
+
+            } catch (error) {
+                // 오류 처리
+                console.error('Error fetching weather:', error);
+                weatherResult.innerHTML = `<p style="color: red;">오류: ${error.message}</p>`;
+            }
+        }
+
+        // 날씨 정보를 HTML로 변환하여 표시하는 함수
+        function displayWeather(data) {
+            // 필요한 데이터 추출
+            const location = data.location;
+            const current = data.current;
+
+            const htmlContent = `
+                <div class="weather-info">
+                    <h2>${location.name}, ${location.country}</h2>
+                    <img src="https:${current.condition.icon}" alt="${current.condition.text}">
+                    <p class="temp">${current.temp_c}°C</p>
+                    <p class="condition">${current.condition.text}</p>
+                    
+                    <div class="details">
+                        <div>
+                            <p><strong>습도:</strong> ${current.humidity}%</p>
+                            <p><strong>체감:</strong> ${current.feelslike_c}°C</p>
+                        </div>
+                        <div>
+                            <p><strong>풍속:</strong> ${current.wind_kph} km/h</p>
+                            <p><strong>자외선:</strong> ${current.uv}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 결과를 화면에 삽입
+            weatherResult.innerHTML = htmlContent;
+        }
+
+    </script>
+
+</body>
+</html>
